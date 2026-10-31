@@ -22,11 +22,24 @@ DATA_FILE = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file_
 class PaperTrader:
     def __init__(self, data_path: str = DATA_FILE):
         self.data_path = data_path
+        self.writable_path = data_path
+        if os.environ.get("VERCEL") or os.environ.get("AWS_LAMBDA_FUNCTION_NAME"):
+            self.writable_path = os.path.join("/tmp", "paper_portfolio.json")
         self._ensure_storage()
 
     def _ensure_storage(self):
-        os.makedirs(os.path.dirname(self.data_path), exist_ok=True)
-        if not os.path.exists(self.data_path):
+        try:
+            os.makedirs(os.path.dirname(self.writable_path), exist_ok=True)
+            if not os.path.exists(self.writable_path):
+                # Copy from seed data_path if available
+                if os.path.exists(self.data_path):
+                    import shutil
+                    try:
+                        shutil.copyfile(self.data_path, self.writable_path)
+                        return
+                    except Exception:
+                        pass
+
             initial_data = {
                 "active_trades": [],
                 "closed_trades": [
@@ -98,25 +111,34 @@ class PaperTrader:
                     "total_realized_pnl": 47.69
                 }
             }
-            with open(self.data_path, "w", encoding="utf-8") as f:
+            with open(self.writable_path, "w", encoding="utf-8") as f:
                 json.dump(initial_data, f, indent=2)
+        except Exception as e:
+            logger.warning(f"Storage init fallback: {e}")
 
     def load_portfolio(self) -> Dict[str, Any]:
-        try:
-            with open(self.data_path, "r", encoding="utf-8") as f:
-                return json.load(f)
-        except Exception as e:
-            logger.error(f"Error loading portfolio: {e}")
-            self._ensure_storage()
-            with open(self.data_path, "r", encoding="utf-8") as f:
-                return json.load(f)
+        for path in (self.writable_path, self.data_path):
+            if path and os.path.exists(path):
+                try:
+                    with open(path, "r", encoding="utf-8") as f:
+                        return json.load(f)
+                except Exception as e:
+                    logger.warning(f"Error loading portfolio from {path}: {e}")
+        self._ensure_storage()
+        if os.path.exists(self.writable_path):
+            try:
+                with open(self.writable_path, "r", encoding="utf-8") as f:
+                    return json.load(f)
+            except Exception:
+                pass
+        return {"active_trades": [], "closed_trades": [], "pnl_history": [], "stats": {}}
 
     def save_portfolio(self, data: Dict[str, Any]):
         try:
-            with open(self.data_path, "w", encoding="utf-8") as f:
+            with open(self.writable_path, "w", encoding="utf-8") as f:
                 json.dump(data, f, indent=2)
         except Exception as e:
-            logger.error(f"Error saving portfolio: {e}")
+            logger.warning(f"Could not save portfolio to {self.writable_path}: {e}")
 
     def sync_and_evaluate(self, rotation_signals: List[Dict[str, Any]], current_prices: Optional[Dict[str, float]] = None) -> Dict[str, Any]:
         """

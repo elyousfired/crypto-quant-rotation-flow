@@ -14,8 +14,19 @@ import httpx
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 logger = logging.getLogger("DefiLlamaClient")
 
-CACHE_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "cache")
-os.makedirs(CACHE_DIR, exist_ok=True)
+if os.environ.get("VERCEL") or os.environ.get("AWS_LAMBDA_FUNCTION_NAME"):
+    CACHE_DIR = "/tmp/quant_cache"
+else:
+    CACHE_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "cache")
+
+try:
+    os.makedirs(CACHE_DIR, exist_ok=True)
+except Exception:
+    CACHE_DIR = "/tmp/quant_cache"
+    try:
+        os.makedirs(CACHE_DIR, exist_ok=True)
+    except Exception:
+        pass
 
 class DefiLlamaClient:
     BASE_URL = "https://api.llama.fi"
