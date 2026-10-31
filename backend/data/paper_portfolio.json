@@ -1,12 +1,12 @@
 {
   "active_trades": [
     {
-      "trade_id": "TRADE-SHIB-1793479236",
+      "trade_id": "TRADE-SHIB-1793479643",
       "symbol": "SHIB",
       "name": "Shiba Inu",
       "sector": "Meme & High-Beta",
       "sector_color": "#F43F5E",
-      "entry_time": "2026-10-31 20:40 UTC",
+      "entry_time": "2026-10-31 20:47 UTC",
       "entry_price": 4.68e-06,
       "current_price": 4.68e-06,
       "unrealized_pnl_pct": 0.0,
@@ -19,20 +19,20 @@
       "status": "ACTIVE"
     },
     {
-      "trade_id": "TRADE-POL-1793479236",
+      "trade_id": "TRADE-POL-1793479643",
       "symbol": "POL",
       "name": "POL (ex-MATIC)",
       "sector": "Layer 2 & Modular",
       "sector_color": "#06B6D4",
-      "entry_time": "2026-10-31 20:40 UTC",
-      "entry_price": 0.092414,
-      "current_price": 0.092414,
+      "entry_time": "2026-10-31 20:47 UTC",
+      "entry_price": 0.092495,
+      "current_price": 0.092495,
       "unrealized_pnl_pct": 0.0,
       "max_gain_pct": 0.0,
-      "tp1_price": 0.10581403,
-      "tp2_price": 0.11644164,
-      "sl_price": 0.08640709,
-      "active_sl_price": 0.08640709,
+      "tp1_price": 0.105906775,
+      "tp2_price": 0.11654369999999999,
+      "sl_price": 0.086482825,
+      "active_sl_price": 0.086482825,
       "tp1_hit": false,
       "status": "ACTIVE"
     }
@@ -40,17 +40,22 @@
   "closed_trades": [],
   "pnl_history": [
     {
-      "timestamp": "2026-10-31 20:45 UTC",
+      "timestamp": "2026-10-31 20:47 UTC",
       "cumulative_pnl": 0.0,
       "event": "LIVE_BASELINE_START"
+    },
+    {
+      "timestamp": "2026-10-31 20:47 UTC",
+      "cumulative_pnl": 0,
+      "event": "START"
     }
   ],
   "stats": {
-    "total_trades": 4,
+    "total_trades": 0,
     "active_trades_count": 2,
-    "winning_trades": 4,
+    "winning_trades": 0,
     "losing_trades": 0,
     "win_rate": 0.0,
-    "total_realized_pnl": 0.0
+    "total_realized_pnl": 0
   }
 }
