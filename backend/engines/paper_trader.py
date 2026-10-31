@@ -40,75 +40,19 @@ class PaperTrader:
                     except Exception:
                         pass
 
+            now_str = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
             initial_data = {
                 "active_trades": [],
-                "closed_trades": [
-                    {
-                        "trade_id": "TRADE-PEPE-1",
-                        "symbol": "PEPE",
-                        "sector": "Meme & High-Beta",
-                        "entry_time": "2026-10-25 13:00 UTC",
-                        "exit_time": "2026-10-26 04:00 UTC",
-                        "entry_price": 0.00000439,
-                        "exit_price": 0.00000553,
-                        "max_gain_pct": 29.38,
-                        "realized_pnl_pct": 20.25,
-                        "exit_reason": "TP2 HIT (+26.0%)",
-                        "status": "CLOSED"
-                    },
-                    {
-                        "trade_id": "TRADE-ARB-1",
-                        "symbol": "ARB",
-                        "sector": "Layer 2 & Modular",
-                        "entry_time": "2026-10-09 00:00 UTC",
-                        "exit_time": "2026-10-10 16:00 UTC",
-                        "entry_price": 0.1721,
-                        "exit_price": 0.1970,
-                        "max_gain_pct": 18.01,
-                        "realized_pnl_pct": 12.94,
-                        "exit_reason": "TP1 HIT (+14.5%)",
-                        "status": "CLOSED"
-                    },
-                    {
-                        "trade_id": "TRADE-NEAR-1",
-                        "symbol": "NEAR",
-                        "sector": "Smart Contract L1",
-                        "entry_time": "2026-10-15 06:00 UTC",
-                        "exit_time": "2026-10-16 11:00 UTC",
-                        "entry_price": 4.637,
-                        "exit_price": 5.309,
-                        "max_gain_pct": 17.32,
-                        "realized_pnl_pct": 7.25,
-                        "exit_reason": "TP1 HIT & BE EXIT",
-                        "status": "CLOSED"
-                    },
-                    {
-                        "trade_id": "TRADE-OP-1",
-                        "symbol": "OP",
-                        "sector": "Layer 2 & Modular",
-                        "entry_time": "2026-10-30 01:00 UTC",
-                        "exit_time": "2026-10-30 18:00 UTC",
-                        "entry_price": 0.0975,
-                        "exit_price": 0.1116,
-                        "max_gain_pct": 25.95,
-                        "realized_pnl_pct": 7.25,
-                        "exit_reason": "TP1 HIT (+14.5%)",
-                        "status": "CLOSED"
-                    }
-                ],
+                "closed_trades": [],
                 "pnl_history": [
-                    {"timestamp": "2026-10-09 00:00 UTC", "cumulative_pnl": 0.0, "event": "BASELINE"},
-                    {"timestamp": "2026-10-10 16:00 UTC", "cumulative_pnl": 12.94, "event": "ARB +12.94%"},
-                    {"timestamp": "2026-10-16 11:00 UTC", "cumulative_pnl": 20.19, "event": "NEAR +7.25%"},
-                    {"timestamp": "2026-10-26 04:00 UTC", "cumulative_pnl": 40.44, "event": "PEPE +20.25%"},
-                    {"timestamp": "2026-10-30 18:00 UTC", "cumulative_pnl": 47.69, "event": "OP +7.25%"}
+                    {"timestamp": now_str, "cumulative_pnl": 0.0, "event": "LIVE_BASELINE_START"}
                 ],
                 "stats": {
-                    "total_trades": 4,
-                    "winning_trades": 4,
+                    "total_trades": 0,
+                    "winning_trades": 0,
                     "losing_trades": 0,
-                    "win_rate": 100.0,
-                    "total_realized_pnl": 47.69
+                    "win_rate": 0.0,
+                    "total_realized_pnl": 0.0
                 }
             }
             with open(self.writable_path, "w", encoding="utf-8") as f:
