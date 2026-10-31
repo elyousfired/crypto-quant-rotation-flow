@@ -39,3 +39,5 @@ backend/cache/llama_*.json
 # OS
 .DS_Store
 Thumbs.db
+
+.vercel
