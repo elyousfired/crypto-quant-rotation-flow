@@ -1,0 +1,44 @@
+name: 24/7 Cloud Demo Paper Trader
+
+on:
+  schedule:
+    # Run every 20 minutes 24/7 in GitHub Cloud (even when PC is OFF)
+    - cron: '*/20 * * * *'
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+jobs:
+  evaluate-trades:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install httpx numpy
+
+      - name: Run 24/7 Trade Evaluator & Rotation Scanner
+        run: |
+          python backend/engines/paper_trader_cloud.py
+
+      - name: Commit & Push Updated Portfolio State
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add backend/data/paper_portfolio.json
+          git diff --staged --quiet || (git commit -m "chore(cloud-bot): update demo portfolio & PnL [skip ci]" && git push)

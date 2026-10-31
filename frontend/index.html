@@ -1,0 +1,1319 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>QUANT.FLOW // Institutional Sector Taxonomy & Rotation Dashboard</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              dark: '#080A0F',
+              panel: '#0E131F',
+              panelHover: '#141A29',
+              border: '#1E2638',
+              accent: '#3B82F6',
+              cyan: '#06B6D4',
+              emerald: '#10B981',
+              rose: '#F43F5E',
+              amber: '#F59E0B',
+              purple: '#8B5CF6'
+            }
+          },
+          fontFamily: {
+            mono: ['JetBrains Mono', 'ui-monospace', 'SFMono-Regular', 'Menlo', 'monospace'],
+            sans: ['Inter', 'system-ui', 'sans-serif']
+          }
+        }
+      }
+    }
+  </script>
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    body {
+      background-color: #080A0F;
+      color: #E2E8F0;
+      font-family: 'Inter', sans-serif;
+    }
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: #0E131F;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: #1E2638;
+      border-radius: 3px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+      background: #2D3748;
+    }
+    .pulse-glow {
+      box-shadow: 0 0 15px rgba(16, 185, 129, 0.25);
+    }
+    .radar-pulse {
+      animation: radar 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    }
+    @keyframes radar {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: .4; transform: scale(1.15); }
+    }
+  </style>
+</head>
+<body class="min-h-screen custom-scrollbar flex flex-col">
+
+  <!-- TOP BAR / QUANT METRICS STRIP -->
+  <header class="border-b border-brand-border bg-brand-panel/90 backdrop-blur sticky top-0 z-50 px-4 py-2.5">
+    <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3">
+      
+      <!-- Brand & Engine Title -->
+      <div class="flex items-center gap-3">
+        <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-brand-accent via-brand-cyan to-brand-emerald flex items-center justify-center font-mono font-bold text-black text-sm shadow-lg shadow-brand-accent/20">
+          QF
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <span class="text-sm font-bold tracking-wider font-mono text-white">QUANT.FLOW</span>
+            <span class="text-[10px] font-mono px-1.5 py-0.5 rounded bg-brand-accent/20 text-brand-accent border border-brand-accent/30 font-semibold">INSTITUTIONAL v2.4</span>
+            <span class="flex items-center gap-1.5 text-[11px] font-mono text-brand-emerald">
+              <span class="w-2 h-2 rounded-full bg-brand-emerald radar-pulse"></span>
+              LIVE FEED
+            </span>
+          </div>
+          <p class="text-[11px] text-gray-400">Hierarchical Taxonomy &bull; DefiLlama Liquidity &bull; Automated Rotation Triggers</p>
+        </div>
+      </div>
+
+      <!-- Macro Ticker Metrics -->
+      <div class="flex items-center gap-4 text-xs font-mono">
+        <div class="hidden md:flex flex-col border-l border-brand-border pl-3">
+          <span class="text-gray-400 text-[10px]">TOTAL CRYPTO MCAP</span>
+          <span id="metric-total-mcap" class="text-white font-semibold">$0.00T</span>
+        </div>
+        <div class="hidden md:flex flex-col border-l border-brand-border pl-3">
+          <span class="text-gray-400 text-[10px]">24H VOLUME</span>
+          <span id="metric-total-volume" class="text-white font-semibold">$0.00B</span>
+        </div>
+        <div class="flex flex-col border-l border-brand-border pl-3">
+          <span class="text-gray-400 text-[10px]">BTC / ETH DOM</span>
+          <span class="text-white font-semibold"><span id="metric-btc-dom">--%</span> / <span id="metric-eth-dom" class="text-brand-cyan">--%</span></span>
+        </div>
+        <div class="flex flex-col border-l border-brand-border pl-3">
+          <span class="text-gray-400 text-[10px]">ACTIVE TRIGGERS</span>
+          <span id="metric-triggers-count" class="text-brand-rose font-bold flex items-center gap-1">
+            <span class="w-1.5 h-1.5 rounded-full bg-brand-rose animate-ping"></span>
+            0 ALERTS
+          </span>
+        </div>
+      </div>
+
+      <!-- Control Actions -->
+      <div class="flex items-center gap-2">
+        <button id="btn-refresh" onclick="refreshDashboard(true)" class="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-brand-panelHover hover:bg-brand-border text-xs font-mono text-gray-200 border border-brand-border transition-all">
+          <svg id="refresh-icon" class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+          <span id="refresh-label">SYNC</span>
+        </button>
+        <span id="last-sync-time" class="text-[10px] text-gray-500 font-mono hidden sm:inline">--:--:--</span>
+      </div>
+
+    </div>
+  </header>
+
+  <!-- NAVIGATION TABS -->
+  <div class="bg-brand-dark border-b border-brand-border px-4 py-2 sticky top-[53px] z-40">
+    <div class="max-w-7xl mx-auto flex items-center gap-2 overflow-x-auto custom-scrollbar">
+      <button onclick="switchTab('module3')" id="tab-module3" class="tab-btn px-3 py-1.5 rounded-md text-xs font-mono font-medium border border-brand-accent/40 bg-brand-accent/10 text-brand-accent flex items-center gap-2">
+        <span class="w-2 h-2 rounded-full bg-brand-accent"></span>
+        3. SECTOR DOMINANCE & ROTATION TRIGGERS
+        <span id="tab-trigger-badge" class="px-1.5 py-0.2 rounded text-[10px] bg-brand-rose text-white hidden">!</span>
+      </button>
+      <button onclick="switchTab('module1')" id="tab-module1" class="tab-btn px-3 py-1.5 rounded-md text-xs font-mono font-medium border border-brand-border bg-brand-panel text-gray-400 hover:text-white flex items-center gap-2">
+        <span class="w-2 h-2 rounded-full bg-brand-cyan"></span>
+        1. HIERARCHICAL TAXONOMY & ECOSYSTEM FLOW
+      </button>
+      <button onclick="switchTab('module2')" id="tab-module2" class="tab-btn px-3 py-1.5 rounded-md text-xs font-mono font-medium border border-brand-border bg-brand-panel text-gray-400 hover:text-white flex items-center gap-2">
+        <span class="w-2 h-2 rounded-full bg-brand-emerald"></span>
+        2. DEFILLAMA LIQUIDITY & VALUATION MULTIPLES
+      </button>
+      <button onclick="switchTab('module4')" id="tab-module4" class="tab-btn px-3 py-1.5 rounded-md text-xs font-mono font-medium border border-brand-border bg-brand-panel text-gray-400 hover:text-white flex items-center gap-2">
+        <span class="w-2 h-2 rounded-full bg-brand-rose animate-pulse"></span>
+        4. LIVE DEMO PORTFOLIO & PnL CURVE (24/7 LIVE)
+        <span id="tab-portfolio-badge" class="px-1.5 py-0.2 rounded text-[10px] bg-brand-emerald text-black font-bold">0 ACTIVE</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- MAIN DASHBOARD CONTENT CONTAINER -->
+  <main class="flex-1 max-w-7xl w-full mx-auto p-4 space-y-6">
+
+    <!-- ============================================================== -->
+    <!-- SECTION 3: SECTOR DOMINANCE & ROTATION TRIGGER ENGINE (HERO) -->
+    <!-- ============================================================== -->
+    <div id="view-module3" class="view-panel space-y-6">
+
+      <!-- ROTATION ALERT BANNER -->
+      <div id="rotation-alert-box" class="p-4 rounded-xl border border-brand-rose/40 bg-gradient-to-r from-brand-rose/10 via-brand-panel to-brand-panel relative overflow-hidden hidden">
+        <div class="flex flex-wrap items-center justify-between gap-4">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-lg bg-brand-rose/20 border border-brand-rose/40 flex items-center justify-center text-brand-rose font-mono text-xl animate-pulse">
+              ⚡
+            </div>
+            <div>
+              <div class="flex items-center gap-2">
+                <span class="text-xs font-mono font-bold text-brand-rose tracking-wider uppercase">ACTIVE ROTATION TRIGGER DETECTED</span>
+                <span class="text-[10px] px-2 py-0.5 rounded bg-brand-rose/30 text-white font-mono font-semibold">≥ 3 CONSECUTIVE DAYS UPTREND</span>
+              </div>
+              <p id="alert-summary-text" class="text-sm text-gray-200 mt-0.5">
+                Institutional volume spike detected in sector rotation wave.
+              </p>
+            </div>
+          </div>
+          <div id="alert-badges-container" class="flex flex-wrap items-center gap-2"></div>
+        </div>
+      </div>
+
+      <!-- TOP GRID: DOMINANCE CHART + SECTOR STATS -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+        <!-- 3-Day Rolling Dominance Chart (2 Cols) -->
+        <div class="lg:col-span-2 p-5 rounded-xl border border-brand-border bg-brand-panel flex flex-col justify-between">
+          <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
+            <div>
+              <div class="flex items-center gap-2">
+                <h3 class="text-sm font-bold font-mono tracking-wide text-white">SECTOR DOMINANCE TRAJECTORY ($Dominance_{cat}(t)$)</h3>
+                <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-brand-border text-gray-300">ROLLING 72H WINDOW</span>
+              </div>
+              <p class="text-xs text-gray-400 mt-1">Formula: <code class="text-brand-cyan font-mono">Dominance_cat = Σ MCap_i / Σ MCap_all</code>. Hourly rolling momentum.</p>
+            </div>
+            <div class="text-[11px] font-mono text-gray-400 flex items-center gap-1.5">
+              <span class="w-2 h-2 rounded-full bg-brand-emerald"></span>
+              HOURLY SPARKLINE COMPOSITE
+            </div>
+          </div>
+
+          <!-- Chart Canvas -->
+          <div class="h-64 sm:h-72 w-full relative">
+            <canvas id="dominanceChart"></canvas>
+          </div>
+
+          <!-- Legend / Footer -->
+          <div id="dominance-legend-strip" class="mt-4 pt-3 border-t border-brand-border flex flex-wrap items-center gap-4 text-xs font-mono"></div>
+        </div>
+
+        <!-- Sector Breakdown & Streak Monitor (1 Col) -->
+        <div class="p-5 rounded-xl border border-brand-border bg-brand-panel flex flex-col">
+          <div class="flex items-center justify-between mb-3">
+            <h3 class="text-sm font-bold font-mono tracking-wide text-white">ROTATION STREAK MONITOR</h3>
+            <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-brand-border text-gray-300">TREND & VOLUME</span>
+          </div>
+          <p class="text-xs text-gray-400 mb-4">Visualizing consecutive days of dominance expansion and volume expansion factor.</p>
+
+          <div id="sectors-streak-list" class="space-y-3 flex-1 overflow-y-auto max-h-[300px] custom-scrollbar pr-1"></div>
+        </div>
+
+      </div>
+
+      <!-- AUTOMATED ROTATION SIGNAL CARDS (Z-SCORE PULLBACK ENTRIES) -->
+      <div>
+        <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
+          <div>
+            <div class="flex items-center gap-2">
+              <span class="w-3 h-3 rounded-full bg-brand-cyan"></span>
+              <h3 class="text-base font-bold font-mono text-white tracking-wide">AUTOMATED ROTATION SIGNALS: Z-SCORE PULLBACK ENTRIES</h3>
+              <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-brand-cyan/20 text-brand-cyan border border-brand-cyan/30">MEAN-REVERSION ENGINE</span>
+            </div>
+            <p class="text-xs text-gray-400 mt-1">
+              Top assets in rotating sectors exhibiting a short-term statistical dip (<code class="text-brand-cyan">Z &lt; -0.2σ</code>) within a macro secular uptrend, maximizing asymmetric Risk/Reward.
+            </p>
+          </div>
+          <span class="text-xs font-mono text-gray-400">INSTITUTIONAL QUANT SELECTION</span>
+        </div>
+
+        <div id="rotation-signals-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+      </div>
+
+    </div>
+
+    <!-- ============================================================== -->
+    <!-- SECTION 1: HIERARCHICAL TAXONOMY & ECOSYSTEM FLOW MATRIX -->
+    <!-- ============================================================== -->
+    <div id="view-module1" class="view-panel space-y-6 hidden">
+
+      <!-- ECOSYSTEM FLOW MATRIX (CONCENTRATION VS DISPERSION) -->
+      <div class="p-5 rounded-xl border border-brand-border bg-brand-panel">
+        <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
+          <div>
+            <div class="flex items-center gap-2">
+              <span class="w-3 h-3 rounded-full bg-brand-emerald"></span>
+              <h3 class="text-base font-bold font-mono text-white tracking-wide">ECOSYSTEM FLOW MATRIX: CONCENTRATION VS. DISPERSION</h3>
+              <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-brand-emerald/20 text-brand-emerald border border-brand-emerald/30">CAPITAL VELOCITY RATIO</span>
+            </div>
+            <p class="text-xs text-gray-400 mt-1">
+              Calculates whether capital is concentrating in the parent L1/L2 network (Flight to Quality) or dispersing into downstream sub-ecosystem beta tokens (Risk-On Dispersal).
+            </p>
+          </div>
+          <div class="flex items-center gap-3 text-xs font-mono">
+            <span class="flex items-center gap-1 text-brand-emerald"><span class="w-2 h-2 rounded-full bg-brand-emerald"></span> Dispersal (Beta Outperforming)</span>
+            <span class="flex items-center gap-1 text-brand-amber"><span class="w-2 h-2 rounded-full bg-brand-amber"></span> Concentration (L1 Outperforming)</span>
+          </div>
+        </div>
+
+        <div id="ecosystem-flow-grid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4"></div>
+      </div>
+
+      <!-- HIERARCHICAL TAXONOMY TREE -->
+      <div class="p-5 rounded-xl border border-brand-border bg-brand-panel">
+        <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
+          <div>
+            <div class="flex items-center gap-2">
+              <span class="w-3 h-3 rounded-full bg-brand-purple"></span>
+              <h3 class="text-base font-bold font-mono text-white tracking-wide">3-TIER HIERARCHICAL CATEGORIZATION TREE</h3>
+              <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-brand-purple/20 text-brand-purple border border-brand-purple/30">MACRO &bull; SUB-SECTOR &bull; ECOSYSTEM</span>
+            </div>
+            <p class="text-xs text-gray-400 mt-1">Cross-category asset grouping mapped from CoinGecko categories and real-time market valuations.</p>
+          </div>
+        </div>
+
+        <div id="taxonomy-tree-container" class="space-y-4"></div>
+      </div>
+
+    </div>
+
+    <!-- ============================================================== -->
+    <!-- SECTION 2: DEFILLAMA SUB-CATEGORIES & TECHNICAL LIQUIDITY -->
+    <!-- ============================================================== -->
+    <div id="view-module2" class="view-panel space-y-6 hidden">
+
+      <!-- ROTATION BAROMETER: SPECULATIVE VS SUSTAINABLE YIELD -->
+      <div class="p-5 rounded-xl border border-brand-border bg-brand-panel">
+        <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
+          <div>
+            <div class="flex items-center gap-2">
+              <span class="w-3 h-3 rounded-full bg-brand-cyan"></span>
+              <h3 class="text-base font-bold font-mono text-white tracking-wide">SPECULATIVE VS. SUSTAINABLE YIELD ROTATION BAROMETER</h3>
+              <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-brand-cyan/20 text-brand-cyan border border-brand-cyan/30">DEFILLAMA FLOW ENGINE</span>
+            </div>
+            <p class="text-xs text-gray-400 mt-1">
+              Tracking liquidity migration between speculative trading venues (DEXes, Perps) and sustainable cashflow infrastructure (Liquid Staking, Restaking, CDP, Lending).
+            </p>
+          </div>
+          <div id="defillama-status-badge"></div>
+        </div>
+
+        <!-- Big Barometer Comparison -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 my-4">
+          
+          <!-- Sustainable Yield Bucket -->
+          <div class="p-4 rounded-lg border border-brand-emerald/30 bg-brand-emerald/5 flex flex-col justify-between">
+            <div>
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-mono font-bold text-brand-emerald tracking-wider uppercase">SUSTAINABLE YIELD & CDP INFRASTRUCTURE</span>
+                <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-brand-emerald/20 text-brand-emerald">PRODUCTIVE CAPITAL</span>
+              </div>
+              <div class="mt-2 flex items-baseline gap-3">
+                <span id="yield-total-tvl" class="text-2xl font-mono font-bold text-white">$0.00B</span>
+                <span id="yield-7d-delta" class="text-sm font-mono font-semibold text-brand-emerald">+0.00% (7d)</span>
+              </div>
+              <p class="text-xs text-gray-400 mt-2">Liquid Staking, Restaking, Collateralized Debt (CDP), and Money Markets generating real protocol fees.</p>
+            </div>
+          </div>
+
+          <!-- Speculative Trading Bucket -->
+          <div class="p-4 rounded-lg border border-brand-purple/30 bg-brand-purple/5 flex flex-col justify-between">
+            <div>
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-mono font-bold text-brand-purple tracking-wider uppercase">SPECULATIVE TRADING & PERPETUALS</span>
+                <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-brand-purple/20 text-brand-purple">HIGH-BETA LEVERAGE</span>
+              </div>
+              <div class="mt-2 flex items-baseline gap-3">
+                <span id="speculative-total-tvl" class="text-2xl font-mono font-bold text-white">$0.00B</span>
+                <span id="speculative-7d-delta" class="text-sm font-mono font-semibold text-brand-purple">+0.00% (7d)</span>
+              </div>
+              <p class="text-xs text-gray-400 mt-2">DEX AMMs, Leveraged Derivatives, Options, and speculative liquidity pools.</p>
+            </div>
+          </div>
+
+        </div>
+
+        <div id="defillama-thesis-box" class="p-3 rounded-lg bg-brand-dark border border-brand-border text-xs font-mono text-gray-300"></div>
+      </div>
+
+      <!-- DEFILLAMA FINANCIAL SUB-CATEGORIES CLUSTERS -->
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="defillama-clusters-grid"></div>
+
+      <!-- INSTITUTIONAL PROTOCOL VALUATION & FUNDAMENTALS TABLE -->
+      <div class="p-5 rounded-xl border border-brand-border bg-brand-panel">
+        <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+          <div>
+            <div class="flex items-center gap-2">
+              <span class="w-3 h-3 rounded-full bg-brand-amber"></span>
+              <h3 class="text-base font-bold font-mono text-white tracking-wide">PROTOCOL VALUATION & FUNDAMENTALS (P/E & P/FEES)</h3>
+              <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-brand-amber/20 text-brand-amber border border-brand-amber/30">TOP 50 PROTOCOLS</span>
+            </div>
+            <p class="text-xs text-gray-400 mt-1">Cross-referencing TVL, 24h & Annualized Fees, Revenue, Market Cap, and P/E valuation ratios.</p>
+          </div>
+          
+          <!-- Search / Filter -->
+          <div class="flex items-center gap-2">
+            <input type="text" id="protocol-search" oninput="filterProtocolsTable()" placeholder="Search protocol..." class="px-3 py-1.5 rounded-md bg-brand-dark border border-brand-border text-xs font-mono text-gray-200 placeholder-gray-500 focus:outline-none focus:border-brand-accent w-44">
+          </div>
+        </div>
+
+        <!-- Table Container -->
+        <div class="overflow-x-auto custom-scrollbar border border-brand-border rounded-lg">
+          <table class="w-full text-left text-xs font-mono border-collapse" id="protocols-table">
+            <thead>
+              <tr class="bg-brand-dark/80 text-gray-400 border-b border-brand-border text-[11px]">
+                <th class="py-3 px-3">PROTOCOL</th>
+                <th class="py-3 px-3">CATEGORY</th>
+                <th class="py-3 px-3">CHAIN</th>
+                <th class="py-3 px-3 text-right">TVL</th>
+                <th class="py-3 px-3 text-right">7D Δ</th>
+                <th class="py-3 px-3 text-right">24H FEES</th>
+                <th class="py-3 px-3 text-right">ANNUAL REVENUE</th>
+                <th class="py-3 px-3 text-right">MCAP</th>
+                <th class="py-3 px-3 text-right">P/E RATIO</th>
+                <th class="py-3 px-3 text-right">TVL / MCAP</th>
+              </tr>
+            </thead>
+            <tbody id="protocols-table-body" class="divide-y divide-brand-border/60 text-gray-300"></tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ============================================================== -->
+    <!-- SECTION 4: LIVE DEMO PORTFOLIO & PnL EQUITY CURVE (24/7 LIVE) -->
+    <!-- ============================================================== -->
+    <div id="view-module4" class="view-panel space-y-6 hidden">
+
+      <!-- BANNER / CLOUD STATUS -->
+      <div class="p-4 rounded-xl border border-brand-emerald/40 bg-gradient-to-r from-brand-emerald/10 via-brand-panel to-brand-panel relative overflow-hidden">
+        <div class="flex flex-wrap items-center justify-between gap-4">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-lg bg-brand-emerald/20 border border-brand-emerald/40 flex items-center justify-center text-brand-emerald font-mono text-xl animate-pulse">
+              📈
+            </div>
+            <div>
+              <div class="flex items-center gap-2">
+                <span class="text-xs font-mono font-bold text-brand-emerald tracking-wider uppercase">
+                  AUTOMATED DEMO EXECUTION ENGINE &bull; 24/7 CLOUD ACTIVE
+                </span>
+                <span class="text-[10px] px-2 py-0.5 rounded bg-brand-emerald/30 text-white font-mono font-semibold">
+                  WAKHA YATFA LPC (RUNS 24/7 IN CLOUD)
+                </span>
+              </div>
+              <p class="text-sm text-gray-200 mt-0.5">
+                Automatically enters rotation signals, tracks stop loss (-6.5%) and take profits (+14.5% / +26%), moves SL to Break-Even, and records every trade permanently.
+              </p>
+            </div>
+          </div>
+          <div class="flex items-center gap-2 text-xs font-mono">
+            <span class="px-2.5 py-1 rounded bg-brand-dark border border-brand-border text-gray-300">
+              SL: <b class="text-brand-rose">-6.5%</b>
+            </span>
+            <span class="px-2.5 py-1 rounded bg-brand-dark border border-brand-border text-gray-300">
+              TP1: <b class="text-brand-emerald">+14.5% (BE)</b>
+            </span>
+            <span class="px-2.5 py-1 rounded bg-brand-dark border border-brand-border text-gray-300">
+              TP2: <b class="text-brand-cyan">+26.0%</b>
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- PERFORMANCE STAT CARDS -->
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div class="p-4 rounded-xl border border-brand-border bg-brand-panel">
+          <span class="text-[10px] font-mono text-gray-400 block uppercase">TOTAL REALIZED PnL</span>
+          <span id="paper-total-pnl" class="text-2xl font-mono font-bold text-brand-emerald">+0.00%</span>
+          <span class="text-[10px] font-mono text-gray-500 block mt-1">Cumulative closed trades</span>
+        </div>
+        <div class="p-4 rounded-xl border border-brand-border bg-brand-panel">
+          <span class="text-[10px] font-mono text-gray-400 block uppercase">WIN RATE</span>
+          <span id="paper-win-rate" class="text-2xl font-mono font-bold text-white">0.0%</span>
+          <span id="paper-win-loss-count" class="text-[10px] font-mono text-gray-500 block mt-1">0 Wins / 0 Losses</span>
+        </div>
+        <div class="p-4 rounded-xl border border-brand-border bg-brand-panel">
+          <span class="text-[10px] font-mono text-gray-400 block uppercase">ACTIVE DEMO POSITIONS</span>
+          <span id="paper-active-count" class="text-2xl font-mono font-bold text-brand-cyan">0</span>
+          <span class="text-[10px] font-mono text-gray-500 block mt-1">Live open trades</span>
+        </div>
+        <div class="p-4 rounded-xl border border-brand-border bg-brand-panel">
+          <span class="text-[10px] font-mono text-gray-400 block uppercase">TOTAL TRADES EXECUTED</span>
+          <span id="paper-total-trades" class="text-2xl font-mono font-bold text-white">0</span>
+          <span class="text-[10px] font-mono text-gray-500 block mt-1">Permanently logged</span>
+        </div>
+      </div>
+
+      <!-- CUMULATIVE PnL EQUITY CURVE -->
+      <div class="p-5 rounded-xl border border-brand-border bg-brand-panel">
+        <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
+          <div>
+            <div class="flex items-center gap-2">
+              <span class="w-3 h-3 rounded-full bg-brand-emerald"></span>
+              <h3 class="text-sm font-bold font-mono tracking-wide text-white">
+                CUMULATIVE PnL EQUITY CURVE ($PnL(t)$)
+              </h3>
+              <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-brand-emerald/20 text-brand-emerald border border-brand-emerald/30">
+                TIME-SERIES PERFORMANCE
+              </span>
+            </div>
+            <p class="text-xs text-gray-400 mt-1">
+              Historical progression of total portfolio return % over time as trades are resolved.
+            </p>
+          </div>
+          <div class="text-[11px] font-mono text-brand-emerald flex items-center gap-1.5">
+            <span class="w-2 h-2 rounded-full bg-brand-emerald animate-ping"></span>
+            LIVE EQUITY CURVE
+          </div>
+        </div>
+
+        <div class="h-64 sm:h-72 w-full relative">
+          <canvas id="pnlEquityChart"></canvas>
+        </div>
+      </div>
+
+      <!-- ACTIVE DEMO POSITIONS -->
+      <div class="p-5 rounded-xl border border-brand-border bg-brand-panel">
+        <div class="flex items-center justify-between mb-4">
+          <div>
+            <h3 class="text-sm font-bold font-mono tracking-wide text-white flex items-center gap-2">
+              <span class="w-2.5 h-2.5 rounded-full bg-brand-cyan animate-pulse"></span>
+              ACTIVE DEMO POSITIONS (OPEN NOW)
+            </h3>
+            <p class="text-xs text-gray-400 mt-0.5">Real-time simulated trades entered on top rotation pullback signals.</p>
+          </div>
+          <span id="active-positions-badge" class="text-xs font-mono px-2 py-0.5 rounded bg-brand-cyan/20 text-brand-cyan border border-brand-cyan/30">
+            0 ACTIVE
+          </span>
+        </div>
+
+        <div id="paper-active-trades-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+      </div>
+
+      <!-- PERMANENT CLOSED TRADES HISTORY -->
+      <div class="p-5 rounded-xl border border-brand-border bg-brand-panel">
+        <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+          <div>
+            <h3 class="text-sm font-bold font-mono tracking-wide text-white flex items-center gap-2">
+              <span class="w-2.5 h-2.5 rounded-full bg-brand-purple"></span>
+              PERMANENT CLOSED TRADES HISTORY (PORTFOLIO LOG)
+            </h3>
+            <p class="text-xs text-gray-400 mt-0.5">Immutable record of every closed trade with entry, exit, max pump, and realized PnL.</p>
+          </div>
+          <span class="text-[10px] font-mono text-gray-400">PERMANENT JSON STORAGE</span>
+        </div>
+
+        <div class="overflow-x-auto custom-scrollbar border border-brand-border rounded-lg">
+          <table class="w-full text-left text-xs font-mono border-collapse">
+            <thead>
+              <tr class="bg-brand-dark/80 text-gray-400 border-b border-brand-border text-[11px]">
+                <th class="py-3 px-3">TRADE ID</th>
+                <th class="py-3 px-3">SYMBOL</th>
+                <th class="py-3 px-3">SECTOR</th>
+                <th class="py-3 px-3">ENTRY TIME</th>
+                <th class="py-3 px-3">EXIT TIME</th>
+                <th class="py-3 px-3 text-right">ENTRY</th>
+                <th class="py-3 px-3 text-right">EXIT</th>
+                <th class="py-3 px-3 text-right">MAX PUMP</th>
+                <th class="py-3 px-3">OUTCOME / REASON</th>
+                <th class="py-3 px-3 text-right">REALIZED PnL</th>
+              </tr>
+            </thead>
+            <tbody id="paper-closed-trades-tbody" class="divide-y divide-brand-border/60 text-gray-300"></tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+
+  </main>
+
+  <!-- FOOTER -->
+  <footer class="border-t border-brand-border bg-brand-panel/60 px-4 py-3 text-center text-xs font-mono text-gray-500">
+    QUANT.FLOW &bull; Institutional Cross-Category Flow & Sector Rotation Engine &bull; Powered by CoinGecko & DefiLlama APIs
+  </footer>
+
+  <!-- SCRIPT LOGIC -->
+  <script>
+    let globalData = null;
+    let dominanceChartInstance = null;
+    let pnlChartInstance = null;
+    let activeTabId = 'module3';
+
+    // Formatters
+    const fmtUSD = (n) => {
+      if (!n || isNaN(n)) return '$0.00';
+      if (n >= 1e12) return '$' + (n / 1e12).toFixed(2) + 'T';
+      if (n >= 1e9) return '$' + (n / 1e9).toFixed(2) + 'B';
+      if (n >= 1e6) return '$' + (n / 1e6).toFixed(2) + 'M';
+      if (n >= 1e3) return '$' + (n / 1e3).toFixed(2) + 'K';
+      return '$' + Number(n).toFixed(2);
+    };
+
+    const fmtPct = (n) => {
+      if (n === null || n === undefined || isNaN(n)) return '0.00%';
+      const val = Number(n);
+      const sign = val > 0 ? '+' : '';
+      return `${sign}${val.toFixed(2)}%`;
+    };
+
+    function switchTab(tabId) {
+      activeTabId = tabId;
+      document.querySelectorAll('.view-panel').forEach(el => el.classList.add('hidden'));
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.remove('border-brand-accent/40', 'bg-brand-accent/10', 'text-brand-accent');
+        btn.classList.add('border-brand-border', 'bg-brand-panel', 'text-gray-400');
+      });
+
+      const activeView = document.getElementById(`view-${tabId}`);
+      const activeBtn = document.getElementById(`tab-${tabId}`);
+      if (activeView) activeView.classList.remove('hidden');
+      if (activeBtn) {
+        activeBtn.classList.remove('border-brand-border', 'bg-brand-panel', 'text-gray-400');
+        activeBtn.classList.add('border-brand-accent/40', 'bg-brand-accent/10', 'text-brand-accent');
+      }
+
+      if (tabId === 'module3' && dominanceChartInstance) {
+        setTimeout(() => dominanceChartInstance.resize(), 50);
+      }
+      if (tabId === 'module4' && pnlChartInstance) {
+        setTimeout(() => pnlChartInstance.resize(), 50);
+      }
+    }
+
+    async function refreshDashboard(force = false) {
+      const btn = document.getElementById('btn-refresh');
+      const icon = document.getElementById('refresh-icon');
+      const label = document.getElementById('refresh-label');
+      
+      icon.classList.add('animate-spin');
+      label.textContent = 'SYNCING...';
+
+      try {
+        const url = force ? '/api/overview?refresh=true' : '/api/overview';
+        const res = await fetch(url);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        globalData = data;
+        renderDashboard(data);
+        document.getElementById('last-sync-time').textContent = new Date().toLocaleTimeString();
+      } catch (err) {
+        console.error('Failed to load dashboard data:', err);
+      } finally {
+        icon.classList.remove('animate-spin');
+        label.textContent = 'SYNC';
+      }
+    }
+
+    function renderDashboard(data) {
+      // 1. Header Metrics
+      const gm = data.global_metrics || {};
+      document.getElementById('metric-total-mcap').textContent = fmtUSD(gm.total_market_cap);
+      document.getElementById('metric-total-volume').textContent = fmtUSD(gm.total_volume_24h);
+      document.getElementById('metric-btc-dom').textContent = (gm.btc_dominance || 0) + '%';
+      document.getElementById('metric-eth-dom').textContent = (gm.eth_dominance || 0) + '%';
+
+      const rot = data.module_3_rotation || {};
+      const triggersCount = rot.active_triggers ? rot.active_triggers.length : 0;
+      document.getElementById('metric-triggers-count').innerHTML = `
+        <span class="w-1.5 h-1.5 rounded-full ${triggersCount > 0 ? 'bg-brand-rose animate-ping' : 'bg-gray-500'}"></span>
+        ${triggersCount} ACTIVE TRIGGER${triggersCount === 1 ? '' : 'S'}
+      `;
+
+      const tabBadge = document.getElementById('tab-trigger-badge');
+      if (triggersCount > 0) {
+        tabBadge.classList.remove('hidden');
+        tabBadge.textContent = triggersCount;
+      } else {
+        tabBadge.classList.add('hidden');
+      }
+
+      // 2. Render Module 3: Dominance Chart & Rotation Triggers
+      renderModule3(rot);
+
+      // 3. Render Module 1: Taxonomy & Ecosystem Flow
+      renderModule1(data.module_1_taxonomy, data.module_1_ecosystem_flow);
+
+      // 4. Render Module 2: DefiLlama Liquidity & Comparative Table
+      renderModule2(data.module_2_defillama);
+
+      // 5. Render Module 4: Live Demo Paper Trading & PnL Curve
+      if (data.paper_portfolio) {
+        renderModule4(data.paper_portfolio);
+      }
+    }
+
+    // ==============================================================
+    // MODULE 3 RENDERER
+    // ==============================================================
+    function renderModule3(rotData) {
+      if (!rotData) return;
+
+      // Rotation Alert Banner
+      const alertBox = document.getElementById('rotation-alert-box');
+      const badgesContainer = document.getElementById('alert-badges-container');
+      const summaryText = document.getElementById('alert-summary-text');
+
+      if (rotData.active_triggers && rotData.active_triggers.length > 0) {
+        alertBox.classList.remove('hidden');
+        badgesContainer.innerHTML = '';
+        rotData.active_triggers.forEach(t => {
+          badgesContainer.innerHTML += `
+            <div class="px-3 py-1.5 rounded-md bg-brand-dark/90 border border-brand-rose/40 text-xs font-mono flex items-center gap-2">
+              <span class="w-2 h-2 rounded-full" style="background-color: ${t.color}"></span>
+              <span class="font-bold text-white">${t.sector}</span>
+              <span class="text-brand-rose font-semibold">${t.dom_delta_3d > 0 ? '+' : ''}${t.dom_delta_3d}% (3d)</span>
+              <span class="text-gray-400 text-[10px]">VOL ${t.volume_expansion}</span>
+            </div>
+          `;
+        });
+        summaryText.textContent = `Capital rotation is actively concentrating into ${rotData.active_triggers.map(t => t.sector).join(', ')} with sustained 3-day dominance expansion and volume surges.`;
+      } else {
+        alertBox.classList.add('hidden');
+      }
+
+      // Dominance Chart Rendering
+      renderDominanceChart(rotData.sectors || []);
+
+      // Rotation Streak Monitor List
+      const streakList = document.getElementById('sectors-streak-list');
+      streakList.innerHTML = '';
+      (rotData.sectors || []).forEach(sec => {
+        const isUp = sec.dom_delta_3d > 0;
+        streakList.innerHTML += `
+          <div class="p-3 rounded-lg border ${sec.is_rotation_triggered ? 'border-brand-rose/50 bg-brand-rose/5' : 'border-brand-border bg-brand-dark/60'} text-xs font-mono">
+            <div class="flex items-center justify-between mb-1">
+              <div class="flex items-center gap-2">
+                <span class="w-2.5 h-2.5 rounded-full" style="background-color: ${sec.color}"></span>
+                <span class="font-semibold text-white">${sec.name}</span>
+              </div>
+              <span class="font-bold text-white">${sec.current_dominance}%</span>
+            </div>
+            <div class="flex items-center justify-between text-[11px] text-gray-400 mt-1">
+              <span>3d Δ: <b class="${isUp ? 'text-brand-emerald' : 'text-brand-rose'}">${isUp ? '+' : ''}${sec.dom_delta_3d}%</b></span>
+              <span>Streak: <b class="text-white">${sec.consecutive_days_up}d UP</b></span>
+              <span>Vol: <b class="text-brand-cyan">${sec.volume_ratio}x</b></span>
+            </div>
+            ${sec.is_rotation_triggered ? `
+              <div class="mt-2 text-[10px] font-bold text-brand-rose uppercase flex items-center gap-1">
+                <span class="w-1.5 h-1.5 rounded-full bg-brand-rose animate-pulse"></span>
+                ACTIVE ROTATION TRIGGER &bull; VOLUME SURGE
+              </div>
+            ` : ''}
+          </div>
+        `;
+      });
+
+      // Rotation Signals Grid (Z-Score Pullback Cards)
+      const sigGrid = document.getElementById('rotation-signals-grid');
+      sigGrid.innerHTML = '';
+      (rotData.top_signals || []).forEach(sig => {
+        const zColor = sig.z_score < -1.0 ? 'text-brand-emerald' : (sig.z_score < 0 ? 'text-brand-cyan' : 'text-gray-300');
+        sigGrid.innerHTML += `
+          <div class="p-4 rounded-xl border border-brand-border bg-brand-panel hover:border-brand-accent/50 transition-all flex flex-col justify-between">
+            <div>
+              <div class="flex items-center justify-between mb-2">
+                <div class="flex items-center gap-2.5">
+                  ${sig.image ? `<img src="${sig.image}" class="w-7 h-7 rounded-full bg-brand-dark" />` : ''}
+                  <div>
+                    <div class="flex items-center gap-1.5">
+                      <span class="font-bold font-mono text-sm text-white">${sig.symbol}</span>
+                      <span class="text-[10px] font-mono text-gray-400">${sig.name}</span>
+                    </div>
+                    <span class="text-[10px] font-mono px-1.5 py-0.2 rounded" style="background-color: ${sig.sector_color}22; color: ${sig.sector_color}; border: 1px solid ${sig.sector_color}44;">
+                      ${sig.sector}
+                    </span>
+                  </div>
+                </div>
+                <div class="text-right">
+                  <div class="text-sm font-bold font-mono text-white">$${sig.current_price.toLocaleString()}</div>
+                  <div class="text-[10px] font-mono ${sig.price_change_24h >= 0 ? 'text-brand-emerald' : 'text-brand-rose'}">
+                    24h ${fmtPct(sig.price_change_24h)}
+                  </div>
+                </div>
+              </div>
+
+              <!-- Quant Valuation Strip -->
+              <div class="grid grid-cols-2 gap-2 my-3 p-2.5 rounded-lg bg-brand-dark border border-brand-border text-xs font-mono">
+                <div>
+                  <span class="text-[10px] text-gray-400 block">Z-SCORE (24H DIP)</span>
+                  <span class="font-bold ${zColor}">${sig.z_score}σ</span>
+                </div>
+                <div>
+                  <span class="text-[10px] text-gray-400 block">SECTOR 3D GAIN</span>
+                  <span class="font-bold text-brand-emerald">+${sig.dominance_gain_3d}%</span>
+                </div>
+              </div>
+
+              <!-- Target Execution Levels -->
+              <div class="space-y-1.5 text-xs font-mono my-3">
+                <div class="flex justify-between">
+                  <span class="text-gray-400">Entry Zone:</span>
+                  <span class="text-brand-cyan font-semibold">${sig.entry_zone}</span>
+                </div>
+                <div class="flex justify-between">
+                  <span class="text-gray-400">Take Profit:</span>
+                  <span class="text-brand-emerald font-semibold">${sig.take_profit_target}</span>
+                </div>
+                <div class="flex justify-between">
+                  <span class="text-gray-400">Invalidation:</span>
+                  <span class="text-brand-rose font-semibold">${sig.invalidation_stop}</span>
+                </div>
+                <div class="flex justify-between">
+                  <span class="text-gray-400">R:R Ratio:</span>
+                  <span class="text-white font-semibold">${sig.risk_reward_ratio}</span>
+                </div>
+              </div>
+
+              <p class="text-[11px] text-gray-400 italic border-t border-brand-border pt-2 mt-2">
+                "${sig.quantitative_rationale}"
+              </p>
+            </div>
+
+            <div class="mt-4 pt-2 border-t border-brand-border flex items-center justify-between text-[10px] font-mono text-brand-emerald">
+              <span>HIGH CONVICTION PULLBACK</span>
+              <span>READY FOR ENTRY &bull; LIMIT ORDER</span>
+            </div>
+          </div>
+        `;
+      });
+    }
+
+    function renderDominanceChart(sectors) {
+      const ctx = document.getElementById('dominanceChart').getContext('2d');
+      if (dominanceChartInstance) {
+        dominanceChartInstance.destroy();
+      }
+
+      // Generate label hours (e.g. -72h to Now)
+      const maxLen = Math.max(...sectors.map(s => (s.trend_trajectory || []).length), 18);
+      const labels = Array.from({length: maxLen}, (_, i) => {
+        const h = Math.round((maxLen - 1 - i) * (72 / maxLen));
+        return h === 0 ? 'Now' : `-${h}h`;
+      });
+
+      const datasets = sectors.map(sec => ({
+        label: sec.name,
+        data: sec.trend_trajectory || [],
+        borderColor: sec.color,
+        backgroundColor: sec.color + '15',
+        borderWidth: sec.is_rotation_triggered ? 3 : 1.8,
+        pointRadius: 0,
+        pointHoverRadius: 5,
+        tension: 0.35,
+        fill: false
+      }));
+
+      dominanceChartInstance = new Chart(ctx, {
+        type: 'line',
+        data: { labels, datasets },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          interaction: { mode: 'index', intersect: false },
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              backgroundColor: '#0E131F',
+              titleColor: '#E2E8F0',
+              bodyColor: '#E2E8F0',
+              borderColor: '#1E2638',
+              borderWidth: 1,
+              padding: 10,
+              callbacks: {
+                label: (ctx) => ` ${ctx.dataset.label}: ${Number(ctx.parsed.y).toFixed(2)}%`
+              }
+            }
+          },
+          scales: {
+            x: {
+              grid: { color: '#1E2638' },
+              ticks: { color: '#64748B', font: { family: 'JetBrains Mono', size: 10 } }
+            },
+            y: {
+              grid: { color: '#1E2638' },
+              ticks: {
+                color: '#64748B',
+                font: { family: 'JetBrains Mono', size: 10 },
+                callback: (v) => v + '%'
+              }
+            }
+          }
+        }
+      });
+
+      // Legend Strip
+      const legStrip = document.getElementById('dominance-legend-strip');
+      legStrip.innerHTML = '';
+      sectors.forEach(s => {
+        legStrip.innerHTML += `
+          <div class="flex items-center gap-1.5 cursor-pointer hover:opacity-80">
+            <span class="w-3 h-1.5 rounded" style="background-color: ${s.color}"></span>
+            <span class="text-gray-300 font-semibold">${s.name}:</span>
+            <span class="text-white">${s.current_dominance}%</span>
+          </div>
+        `;
+      });
+    }
+
+    // ==============================================================
+    // MODULE 1 RENDERER
+    // ==============================================================
+    function renderModule1(taxonomyData, flowMatrix) {
+      // 1. Ecosystem Flow Matrix
+      const flowGrid = document.getElementById('ecosystem-flow-grid');
+      flowGrid.innerHTML = '';
+
+      (flowMatrix || []).forEach(item => {
+        const p = item.parent_asset;
+        const sub = item.sub_ecosystem;
+        const fm = item.flow_metrics;
+
+        const isDispersal = fm.flow_regime === 'DISPERSION';
+        const isConcentration = fm.flow_regime === 'CONCENTRATION';
+
+        flowGrid.innerHTML += `
+          <div class="p-4 rounded-xl border border-brand-border bg-brand-panel hover:border-brand-accent/40 transition-all flex flex-col justify-between">
+            <div>
+              <!-- Header -->
+              <div class="flex items-center justify-between mb-3">
+                <div class="flex items-center gap-2">
+                  ${p.image ? `<img src="${p.image}" class="w-6 h-6 rounded-full" />` : ''}
+                  <div>
+                    <h4 class="font-mono font-bold text-sm text-white">${item.ecosystem}</h4>
+                    <span class="text-[10px] font-mono text-gray-400">Parent: ${p.symbol} ($${Number(p.price).toLocaleString()})</span>
+                  </div>
+                </div>
+                <span class="px-2 py-0.5 rounded text-[10px] font-mono font-semibold" style="background-color: ${fm.sentiment_color}22; color: ${fm.sentiment_color}; border: 1px solid ${fm.sentiment_color}44;">
+                  ${fm.regime_badge}
+                </span>
+              </div>
+
+              <!-- Flow Ratio Progress Bar -->
+              <div class="my-3 space-y-1">
+                <div class="flex justify-between text-[11px] font-mono text-gray-400">
+                  <span>Parent L1 Share: <b class="text-white">${fm.parent_dominance_pct}%</b></span>
+                  <span>Sub-Beta Share: <b class="text-brand-cyan">${fm.sub_share_pct}%</b></span>
+                </div>
+                <div class="w-full h-2 rounded-full bg-brand-dark overflow-hidden flex border border-brand-border">
+                  <div class="h-full bg-brand-accent" style="width: ${fm.parent_dominance_pct}%"></div>
+                  <div class="h-full bg-brand-emerald" style="width: ${fm.sub_share_pct}%"></div>
+                </div>
+              </div>
+
+              <!-- Velocity Comparison -->
+              <div class="grid grid-cols-2 gap-2 p-2.5 rounded-lg bg-brand-dark border border-brand-border text-xs font-mono my-3">
+                <div>
+                  <span class="text-[10px] text-gray-400 block">${p.symbol} 24H CHG</span>
+                  <span class="font-bold ${p.change_24h >= 0 ? 'text-brand-emerald' : 'text-brand-rose'}">${fmtPct(p.change_24h)}</span>
+                </div>
+                <div>
+                  <span class="text-[10px] text-gray-400 block">SUB-TOKENS AVG</span>
+                  <span class="font-bold ${sub.weighted_change_24h >= 0 ? 'text-brand-emerald' : 'text-brand-rose'}">${fmtPct(sub.weighted_change_24h)}</span>
+                </div>
+              </div>
+
+              <div class="flex justify-between text-xs font-mono text-gray-300 my-2">
+                <span class="text-gray-400">Momentum Delta:</span>
+                <span class="font-bold ${fm.momentum_delta_24h >= 0 ? 'text-brand-emerald' : 'text-brand-amber'}">
+                  ${fm.momentum_delta_24h >= 0 ? '+' : ''}${fm.momentum_delta_24h}% (24h)
+                </span>
+              </div>
+
+              <p class="text-[11px] text-gray-400 italic mt-2 border-t border-brand-border pt-2">
+                ${fm.rationale}
+              </p>
+            </div>
+
+            <!-- Top Ecosystem Tokens Chips -->
+            <div class="mt-4 pt-3 border-t border-brand-border">
+              <span class="text-[10px] font-mono text-gray-400 uppercase block mb-1.5">Top Tracked Beta Assets:</span>
+              <div class="flex flex-wrap gap-1.5">
+                ${(sub.tokens || []).slice(0, 5).map(tok => `
+                  <span class="px-2 py-0.5 rounded bg-brand-dark border border-brand-border text-[10px] font-mono text-gray-200 flex items-center gap-1">
+                    <b>${tok.symbol}</b>
+                    <span class="${tok.price_change_24h >= 0 ? 'text-brand-emerald' : 'text-brand-rose'}">${fmtPct(tok.price_change_24h)}</span>
+                  </span>
+                `).join('')}
+              </div>
+            </div>
+          </div>
+        `;
+      });
+
+      // 2. Hierarchical Taxonomy Tree
+      const treeContainer = document.getElementById('taxonomy-tree-container');
+      treeContainer.innerHTML = '';
+
+      (taxonomyData.macro_sectors || []).forEach(macro => {
+        treeContainer.innerHTML += `
+          <div class="border border-brand-border rounded-xl bg-brand-panel overflow-hidden">
+            <div class="p-4 bg-brand-panelHover/50 flex flex-wrap items-center justify-between gap-3 border-b border-brand-border">
+              <div>
+                <div class="flex items-center gap-2">
+                  <h4 class="font-mono font-bold text-sm text-white">${macro.macro_sector}</h4>
+                  <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-brand-accent/20 text-brand-accent border border-brand-accent/30 font-semibold">
+                    ${macro.dominance_pct}% TOTAL SHARE
+                  </span>
+                </div>
+                <p class="text-xs text-gray-400 mt-0.5">${macro.description}</p>
+              </div>
+              <div class="text-right text-xs font-mono">
+                <span class="text-gray-400 text-[10px] block">SECTOR MCAP</span>
+                <span class="font-bold text-white">${fmtUSD(macro.market_cap)}</span>
+              </div>
+            </div>
+
+            <!-- Sub-Sectors Grid -->
+            <div class="p-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+              ${(macro.sub_sectors || []).map(sub => `
+                <div class="p-3 rounded-lg bg-brand-dark border border-brand-border text-xs font-mono flex flex-col justify-between">
+                  <div>
+                    <div class="flex items-center justify-between mb-1.5">
+                      <span class="font-bold text-brand-cyan">${sub.name}</span>
+                      <span class="text-[10px] text-gray-400">${sub.share_of_macro}% of macro</span>
+                    </div>
+                    <div class="text-sm font-bold text-white mb-2">${fmtUSD(sub.market_cap)}</div>
+                  </div>
+                  <div class="flex flex-wrap gap-1 mt-2">
+                    ${(sub.top_tokens || []).map(t => `
+                      <span class="px-1.5 py-0.5 rounded bg-brand-panel border border-brand-border text-[10px] font-mono text-gray-300">
+                        ${t.symbol}
+                      </span>
+                    `).join('')}
+                  </div>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        `;
+      });
+    }
+
+    // ==============================================================
+    // MODULE 2 RENDERER
+    // ==============================================================
+    function renderModule2(llamaData) {
+      if (!llamaData) return;
+
+      const rot = llamaData.rotation_metrics || {};
+      document.getElementById('yield-total-tvl').textContent = fmtUSD(rot.sustainable_yield_tvl);
+      document.getElementById('yield-7d-delta').textContent = fmtPct(rot.sustainable_yield_7d_change) + ' (7d)';
+      document.getElementById('yield-7d-delta').className = `text-sm font-mono font-semibold ${rot.sustainable_yield_7d_change >= 0 ? 'text-brand-emerald' : 'text-brand-rose'}`;
+
+      document.getElementById('speculative-total-tvl').textContent = fmtUSD(rot.speculative_tvl);
+      document.getElementById('speculative-7d-delta').textContent = fmtPct(rot.speculative_7d_change) + ' (7d)';
+      document.getElementById('speculative-7d-delta').className = `text-sm font-mono font-semibold ${rot.speculative_7d_change >= 0 ? 'text-brand-purple' : 'text-brand-rose'}`;
+
+      document.getElementById('defillama-status-badge').innerHTML = `
+        <span class="px-3 py-1 rounded-md text-xs font-mono font-bold" style="background-color: ${rot.badge_color}22; color: ${rot.badge_color}; border: 1px solid ${rot.badge_color}44;">
+          ${rot.state_badge}
+        </span>
+      `;
+
+      document.getElementById('defillama-thesis-box').innerHTML = `
+        <b>QUANTITATIVE MACRO THESIS:</b> ${rot.thesis}
+      `;
+
+      // DefiLlama Clusters Grid
+      const clustersGrid = document.getElementById('defillama-clusters-grid');
+      clustersGrid.innerHTML = '';
+      (llamaData.clusters || []).forEach(cl => {
+        clustersGrid.innerHTML += `
+          <div class="p-4 rounded-xl border border-brand-border bg-brand-panel flex flex-col justify-between">
+            <div>
+              <div class="flex items-center justify-between mb-2">
+                <span class="font-bold font-mono text-sm text-white">${cl.name}</span>
+                <span class="text-[10px] font-mono px-2 py-0.5 rounded ${cl.nature === 'SUSTAINABLE_YIELD' ? 'bg-brand-emerald/20 text-brand-emerald' : 'bg-brand-purple/20 text-brand-purple'}">
+                  ${cl.nature}
+                </span>
+              </div>
+              <p class="text-xs text-gray-400 mb-3">${cl.description}</p>
+              <div class="text-xl font-bold font-mono text-white mb-1">${fmtUSD(cl.total_tvl)}</div>
+              <div class="text-xs font-mono ${cl.avg_7d_change >= 0 ? 'text-brand-emerald' : 'text-brand-rose'} mb-3">
+                7d Weighted Δ: ${fmtPct(cl.avg_7d_change)}
+              </div>
+            </div>
+            <div class="pt-2 border-t border-brand-border text-[11px] font-mono text-gray-400 flex justify-between">
+              <span>Daily Fees: <b class="text-white">${fmtUSD(cl.total_daily_fees)}</b></span>
+              <span>Daily Rev: <b class="text-brand-cyan">${fmtUSD(cl.total_daily_revenue)}</b></span>
+            </div>
+          </div>
+        `;
+      });
+
+      // Comparative Valuation Table
+      renderProtocolsTable(llamaData.comparative_table || []);
+    }
+
+    let currentProtocolsList = [];
+    function renderProtocolsTable(protocols) {
+      currentProtocolsList = protocols;
+      const tbody = document.getElementById('protocols-table-body');
+      tbody.innerHTML = '';
+
+      protocols.forEach(p => {
+        const peBadge = p.pe_ratio !== null ? (
+          p.pe_ratio < 15 ? `<span class="px-1.5 py-0.5 rounded bg-brand-emerald/20 text-brand-emerald font-bold">${p.pe_ratio}x (DEEP VALUE)</span>` :
+          p.pe_ratio < 40 ? `<span class="text-brand-cyan">${p.pe_ratio}x</span>` :
+          `<span class="text-gray-400">${p.pe_ratio}x</span>`
+        ) : '<span class="text-gray-600">--</span>';
+
+        tbody.innerHTML += `
+          <tr class="hover:bg-brand-panelHover/60 transition-colors">
+            <td class="py-2.5 px-3 font-semibold text-white flex items-center gap-2">
+              ${p.logo ? `<img src="${p.logo}" class="w-4 h-4 rounded-full" />` : ''}
+              ${p.name}
+            </td>
+            <td class="py-2.5 px-3 text-brand-cyan">${p.category}</td>
+            <td class="py-2.5 px-3 text-gray-400">${p.chain}</td>
+            <td class="py-2.5 px-3 text-right font-bold text-white">${fmtUSD(p.tvl)}</td>
+            <td class="py-2.5 px-3 text-right ${p.change_7d >= 0 ? 'text-brand-emerald' : 'text-brand-rose'}">${fmtPct(p.change_7d)}</td>
+            <td class="py-2.5 px-3 text-right text-gray-200">${p.daily_fees ? fmtUSD(p.daily_fees) : '--'}</td>
+            <td class="py-2.5 px-3 text-right text-gray-200">${p.annualized_revenue ? fmtUSD(p.annualized_revenue) : '--'}</td>
+            <td class="py-2.5 px-3 text-right text-white">${p.mcap ? fmtUSD(p.mcap) : '--'}</td>
+            <td class="py-2.5 px-3 text-right">${peBadge}</td>
+            <td class="py-2.5 px-3 text-right text-brand-cyan">${p.tvl_mcap_ratio ? p.tvl_mcap_ratio + 'x' : '--'}</td>
+          </tr>
+        `;
+      });
+    }
+
+    function filterProtocolsTable() {
+      const q = document.getElementById('protocol-search').value.toLowerCase().trim();
+      if (!q) {
+        renderProtocolsTable(currentProtocolsList);
+        return;
+      }
+      const filtered = currentProtocolsList.filter(p => 
+        p.name.toLowerCase().includes(q) || 
+        p.category.toLowerCase().includes(q) || 
+        p.chain.toLowerCase().includes(q)
+      );
+      renderProtocolsTable(filtered);
+    }
+
+    // ==============================================================
+    // MODULE 4 RENDERER: LIVE DEMO PAPER TRADING & PnL CURVE
+    // ==============================================================
+    function renderModule4(paperData) {
+      if (!paperData) return;
+
+      const st = paperData.stats || {};
+      const active = paperData.active_trades || [];
+      const closed = paperData.closed_trades || [];
+      const pnlHistory = paperData.pnl_history || [];
+
+      // Summary Cards
+      const totalPnlEl = document.getElementById('paper-total-pnl');
+      totalPnlEl.textContent = fmtPct(st.total_realized_pnl);
+      totalPnlEl.className = `text-2xl font-mono font-bold ${st.total_realized_pnl >= 0 ? 'text-brand-emerald' : 'text-brand-rose'}`;
+
+      document.getElementById('paper-win-rate').textContent = (st.win_rate || 0) + '%';
+      document.getElementById('paper-win-loss-count').textContent = `${st.winning_trades || 0} Wins / ${st.losing_trades || 0} Losses`;
+      document.getElementById('paper-active-count').textContent = active.length;
+      document.getElementById('paper-total-trades').textContent = closed.length;
+      document.getElementById('tab-portfolio-badge').textContent = `${active.length} ACTIVE`;
+      document.getElementById('active-positions-badge').textContent = `${active.length} ACTIVE POSITIONS`;
+
+      // Render Cumulative PnL Equity Curve
+      renderPnlEquityChart(pnlHistory);
+
+      // Render Active Demo Positions Grid
+      const activeGrid = document.getElementById('paper-active-trades-grid');
+      activeGrid.innerHTML = '';
+      if (active.length === 0) {
+        activeGrid.innerHTML = `
+          <div class="col-span-full p-6 text-center text-xs font-mono text-gray-500 bg-brand-dark/40 rounded-xl border border-brand-border">
+            No active demo positions currently. Waiting for next rotation pullback signal trigger.
+          </div>
+        `;
+      } else {
+        active.forEach(tr => {
+          const isUp = (tr.unrealized_pnl_pct || 0) >= 0;
+          activeGrid.innerHTML += `
+            <div class="p-4 rounded-xl border border-brand-border bg-brand-panel hover:border-brand-cyan/50 transition-all flex flex-col justify-between">
+              <div>
+                <div class="flex items-center justify-between mb-2">
+                  <div>
+                    <div class="flex items-center gap-1.5">
+                      <span class="font-bold font-mono text-sm text-white">${tr.symbol}</span>
+                      <span class="text-[10px] font-mono text-gray-400">${tr.name || tr.symbol}</span>
+                    </div>
+                    <span class="text-[10px] font-mono px-1.5 py-0.2 rounded bg-brand-dark text-brand-cyan border border-brand-border">
+                      ${tr.sector}
+                    </span>
+                  </div>
+                  <span class="px-2 py-0.5 rounded text-[10px] font-mono font-semibold ${tr.tp1_hit ? 'bg-brand-emerald/20 text-brand-emerald border border-brand-emerald/30' : 'bg-brand-cyan/20 text-brand-cyan border border-brand-cyan/30'}">
+                    ${tr.tp1_hit ? 'TP1 HIT & BE SECURED' : 'ACTIVE ENTRY'}
+                  </span>
+                </div>
+
+                <!-- Live Price & Unrealized PnL Strip -->
+                <div class="grid grid-cols-2 gap-2 my-3 p-2.5 rounded-lg bg-brand-dark border border-brand-border text-xs font-mono">
+                  <div>
+                    <span class="text-[10px] text-gray-400 block">ENTRY / CURRENT</span>
+                    <span class="font-bold text-white">$${Number(tr.entry_price).toLocaleString()} / $${Number(tr.current_price).toLocaleString()}</span>
+                  </div>
+                  <div>
+                    <span class="text-[10px] text-gray-400 block">UNREALIZED PnL</span>
+                    <span class="font-bold ${isUp ? 'text-brand-emerald' : 'text-brand-rose'}">${fmtPct(tr.unrealized_pnl_pct)}</span>
+                  </div>
+                </div>
+
+                <!-- Execution Targets -->
+                <div class="space-y-1 text-xs font-mono my-2 text-gray-300">
+                  <div class="flex justify-between">
+                    <span class="text-gray-400">Target TP1:</span>
+                    <span class="text-brand-emerald font-semibold">$${Number(tr.tp1_price).toLocaleString()} (+14.5%)</span>
+                  </div>
+                  <div class="flex justify-between">
+                    <span class="text-gray-400">Target TP2:</span>
+                    <span class="text-brand-cyan font-semibold">$${Number(tr.tp2_price).toLocaleString()} (+26.0%)</span>
+                  </div>
+                  <div class="flex justify-between">
+                    <span class="text-gray-400">Stop Loss:</span>
+                    <span class="text-brand-rose font-semibold">$${Number(tr.active_sl_price || tr.sl_price).toLocaleString()} ${tr.tp1_hit ? '(BE)' : '(-6.5%)'}</span>
+                  </div>
+                  <div class="flex justify-between">
+                    <span class="text-gray-400">Max Run-up:</span>
+                    <span class="text-white font-semibold">+${tr.max_gain_pct || 0}%</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="mt-3 pt-2 border-t border-brand-border flex items-center justify-between text-[10px] font-mono text-gray-500">
+                <span>Entry: ${tr.entry_time}</span>
+                <span class="text-brand-emerald">LIVE MONITORING</span>
+              </div>
+            </div>
+          `;
+        });
+      }
+
+      // Render Permanent Closed Trades Table
+      const closedTbody = document.getElementById('paper-closed-trades-tbody');
+      closedTbody.innerHTML = '';
+      if (closed.length === 0) {
+        closedTbody.innerHTML = `
+          <tr>
+            <td colspan="10" class="py-6 text-center text-xs font-mono text-gray-500">
+              No closed trades logged yet.
+            </td>
+          </tr>
+        `;
+      } else {
+        // Show latest closed trades first
+        [...closed].reverse().forEach(tr => {
+          const isWin = (tr.realized_pnl_pct || 0) > 0;
+          const badgeClass = isWin ? 'bg-brand-emerald/20 text-brand-emerald border-brand-emerald/40' : 'bg-brand-rose/20 text-brand-rose border-brand-rose/40';
+
+          closedTbody.innerHTML += `
+            <tr class="hover:bg-brand-panelHover/60 transition-colors">
+              <td class="py-2.5 px-3 text-gray-400 font-semibold">${tr.trade_id}</td>
+              <td class="py-2.5 px-3 font-bold text-white">${tr.symbol}</td>
+              <td class="py-2.5 px-3 text-gray-400">${tr.sector}</td>
+              <td class="py-2.5 px-3 text-gray-400 text-[11px]">${tr.entry_time}</td>
+              <td class="py-2.5 px-3 text-gray-400 text-[11px]">${tr.exit_time}</td>
+              <td class="py-2.5 px-3 text-right text-gray-200">$${Number(tr.entry_price).toLocaleString()}</td>
+              <td class="py-2.5 px-3 text-right font-semibold text-white">$${Number(tr.exit_price).toLocaleString()}</td>
+              <td class="py-2.5 px-3 text-right text-brand-cyan font-semibold">+${tr.max_gain_pct}%</td>
+              <td class="py-2.5 px-3">
+                <span class="px-2 py-0.5 rounded text-[10px] font-mono border ${badgeClass}">
+                  ${tr.exit_reason}
+                </span>
+              </td>
+              <td class="py-2.5 px-3 text-right font-bold ${isWin ? 'text-brand-emerald' : 'text-brand-rose'}">
+                ${fmtPct(tr.realized_pnl_pct)}
+              </td>
+            </tr>
+          `;
+        });
+      }
+    }
+
+    function renderPnlEquityChart(history) {
+      const ctx = document.getElementById('pnlEquityChart').getContext('2d');
+      if (pnlChartInstance) {
+        pnlChartInstance.destroy();
+      }
+
+      const labels = history.map(h => h.timestamp.replace(' UTC', ''));
+      const dataPoints = history.map(h => h.cumulative_pnl);
+
+      pnlChartInstance = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels,
+          datasets: [{
+            label: 'Cumulative Portfolio Return %',
+            data: dataPoints,
+            borderColor: '#10B981',
+            backgroundColor: 'rgba(16, 185, 129, 0.12)',
+            borderWidth: 2.5,
+            pointRadius: 4,
+            pointHoverRadius: 6,
+            pointBackgroundColor: '#10B981',
+            pointBorderColor: '#0E131F',
+            tension: 0.35,
+            fill: true
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          interaction: { mode: 'index', intersect: false },
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              backgroundColor: '#0E131F',
+              titleColor: '#E2E8F0',
+              bodyColor: '#10B981',
+              borderColor: '#1E2638',
+              borderWidth: 1,
+              padding: 10,
+              callbacks: {
+                label: (ctx) => ` Cumulative Return: ${Number(ctx.parsed.y).toFixed(2)}%`
+              }
+            }
+          },
+          scales: {
+            x: {
+              grid: { color: '#1E2638' },
+              ticks: { color: '#64748B', font: { family: 'JetBrains Mono', size: 10 } }
+            },
+            y: {
+              grid: { color: '#1E2638' },
+              ticks: {
+                color: '#64748B',
+                font: { family: 'JetBrains Mono', size: 10 },
+                callback: (v) => v + '%'
+              }
+            }
+          }
+        }
+      });
+    }
+
+    // Auto-refresh on startup and every 45 seconds
+    window.addEventListener('DOMContentLoaded', () => {
+      refreshDashboard(false);
+      setInterval(() => refreshDashboard(false), 45000);
+    });
+  </script>
+</body>
+</html>

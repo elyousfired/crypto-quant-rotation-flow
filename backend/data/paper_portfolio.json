@@ -1,0 +1,165 @@
+{
+  "active_trades": [
+    {
+      "trade_id": "TRADE-SHIB-1793477932",
+      "symbol": "SHIB",
+      "name": "Shiba Inu",
+      "sector": "Meme & High-Beta",
+      "sector_color": "#F43F5E",
+      "entry_time": "2026-10-31 20:18 UTC",
+      "entry_price": 4.69e-06,
+      "current_price": 4.69e-06,
+      "unrealized_pnl_pct": 0.0,
+      "max_gain_pct": 0.0,
+      "tp1_price": 5.37005e-06,
+      "tp2_price": 5.9094e-06,
+      "sl_price": 4.38515e-06,
+      "active_sl_price": 4.38515e-06,
+      "tp1_hit": false,
+      "status": "ACTIVE"
+    },
+    {
+      "trade_id": "TRADE-GRASS-1793477932",
+      "symbol": "GRASS",
+      "name": "Grass",
+      "sector": "AI & DePIN",
+      "sector_color": "#8B5CF6",
+      "entry_time": "2026-10-31 20:18 UTC",
+      "entry_price": 0.580024,
+      "current_price": 0.580024,
+      "unrealized_pnl_pct": 0.0,
+      "max_gain_pct": 0.0,
+      "tp1_price": 0.66412748,
+      "tp2_price": 0.73083024,
+      "sl_price": 0.54232244,
+      "active_sl_price": 0.54232244,
+      "tp1_hit": false,
+      "status": "ACTIVE"
+    },
+    {
+      "trade_id": "TRADE-CRV-1793477932",
+      "symbol": "CRV",
+      "name": "Curve DAO",
+      "sector": "DeFi & Yield",
+      "sector_color": "#10B981",
+      "entry_time": "2026-10-31 20:18 UTC",
+      "entry_price": 0.283828,
+      "current_price": 0.283828,
+      "unrealized_pnl_pct": 0.0,
+      "max_gain_pct": 0.0,
+      "tp1_price": 0.32498306000000005,
+      "tp2_price": 0.35762328000000004,
+      "sl_price": 0.26537918000000005,
+      "active_sl_price": 0.26537918000000005,
+      "tp1_hit": false,
+      "status": "ACTIVE"
+    },
+    {
+      "trade_id": "TRADE-POL-1793477932",
+      "symbol": "POL",
+      "name": "POL (ex-MATIC)",
+      "sector": "Layer 2 & Modular",
+      "sector_color": "#06B6D4",
+      "entry_time": "2026-10-31 20:18 UTC",
+      "entry_price": 0.092717,
+      "current_price": 0.092717,
+      "unrealized_pnl_pct": 0.0,
+      "max_gain_pct": 0.0,
+      "tp1_price": 0.106160965,
+      "tp2_price": 0.11682342,
+      "sl_price": 0.086690395,
+      "active_sl_price": 0.086690395,
+      "tp1_hit": false,
+      "status": "ACTIVE"
+    }
+  ],
+  "closed_trades": [
+    {
+      "trade_id": "TRADE-PEPE-1",
+      "symbol": "PEPE",
+      "sector": "Meme & High-Beta",
+      "entry_time": "2026-10-25 13:00 UTC",
+      "exit_time": "2026-10-26 04:00 UTC",
+      "entry_price": 4.39e-06,
+      "exit_price": 5.53e-06,
+      "max_gain_pct": 29.38,
+      "realized_pnl_pct": 20.25,
+      "exit_reason": "TP2 HIT (+26.0%)",
+      "status": "CLOSED"
+    },
+    {
+      "trade_id": "TRADE-ARB-1",
+      "symbol": "ARB",
+      "sector": "Layer 2 & Modular",
+      "entry_time": "2026-10-09 00:00 UTC",
+      "exit_time": "2026-10-10 16:00 UTC",
+      "entry_price": 0.1721,
+      "exit_price": 0.197,
+      "max_gain_pct": 18.01,
+      "realized_pnl_pct": 12.94,
+      "exit_reason": "TP1 HIT (+14.5%)",
+      "status": "CLOSED"
+    },
+    {
+      "trade_id": "TRADE-NEAR-1",
+      "symbol": "NEAR",
+      "sector": "Smart Contract L1",
+      "entry_time": "2026-10-15 06:00 UTC",
+      "exit_time": "2026-10-16 11:00 UTC",
+      "entry_price": 4.637,
+      "exit_price": 5.309,
+      "max_gain_pct": 17.32,
+      "realized_pnl_pct": 7.25,
+      "exit_reason": "TP1 HIT & BE EXIT",
+      "status": "CLOSED"
+    },
+    {
+      "trade_id": "TRADE-OP-1",
+      "symbol": "OP",
+      "sector": "Layer 2 & Modular",
+      "entry_time": "2026-10-30 01:00 UTC",
+      "exit_time": "2026-10-30 18:00 UTC",
+      "entry_price": 0.0975,
+      "exit_price": 0.1116,
+      "max_gain_pct": 25.95,
+      "realized_pnl_pct": 7.25,
+      "exit_reason": "TP1 HIT (+14.5%)",
+      "status": "CLOSED"
+    }
+  ],
+  "pnl_history": [
+    {
+      "timestamp": "2026-10-09 00:00 UTC",
+      "cumulative_pnl": 0.0,
+      "event": "BASELINE"
+    },
+    {
+      "timestamp": "2026-10-10 16:00 UTC",
+      "cumulative_pnl": 12.94,
+      "event": "ARB +12.94%"
+    },
+    {
+      "timestamp": "2026-10-16 11:00 UTC",
+      "cumulative_pnl": 20.19,
+      "event": "NEAR +7.25%"
+    },
+    {
+      "timestamp": "2026-10-26 04:00 UTC",
+      "cumulative_pnl": 40.44,
+      "event": "PEPE +20.25%"
+    },
+    {
+      "timestamp": "2026-10-30 18:00 UTC",
+      "cumulative_pnl": 47.69,
+      "event": "OP +7.25%"
+    }
+  ],
+  "stats": {
+    "total_trades": 4,
+    "active_trades_count": 4,
+    "winning_trades": 4,
+    "losing_trades": 0,
+    "win_rate": 100.0,
+    "total_realized_pnl": 47.69
+  }
+}
