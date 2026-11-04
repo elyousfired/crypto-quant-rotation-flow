@@ -1,38 +1,20 @@
 {
   "active_trades": [
     {
-      "trade_id": "TRADE-ZRO-1793813415",
+      "trade_id": "TRADE-ZRO-1793832751",
       "symbol": "ZRO",
       "name": "LayerZero",
       "sector": "Infra & Oracles",
       "sector_color": "#F59E0B",
-      "entry_time": "2026-11-04 17:30 UTC",
-      "entry_price": 1.82,
-      "current_price": 1.82,
+      "entry_time": "2026-11-04 22:52 UTC",
+      "entry_price": 1.85,
+      "current_price": 1.85,
       "unrealized_pnl_pct": 0.0,
       "max_gain_pct": 0.0,
-      "tp1_price": 2.0839000000000003,
-      "tp2_price": 2.2932,
-      "sl_price": 1.7017000000000002,
-      "active_sl_price": 1.7017000000000002,
-      "tp1_hit": false,
-      "status": "ACTIVE"
-    },
-    {
-      "trade_id": "TRADE-FIL-1793813415",
-      "symbol": "FIL",
-      "name": "Filecoin",
-      "sector": "Infra & Oracles",
-      "sector_color": "#F59E0B",
-      "entry_time": "2026-11-04 17:30 UTC",
-      "entry_price": 0.869684,
-      "current_price": 0.869684,
-      "unrealized_pnl_pct": 0.0,
-      "max_gain_pct": 0.0,
-      "tp1_price": 0.99578818,
-      "tp2_price": 1.09580184,
-      "sl_price": 0.8131545400000001,
-      "active_sl_price": 0.8131545400000001,
+      "tp1_price": 2.11825,
+      "tp2_price": 2.331,
+      "sl_price": 1.7297500000000001,
+      "active_sl_price": 1.7297500000000001,
       "tp1_hit": false,
       "status": "ACTIVE"
     }
@@ -40,19 +22,19 @@
   "closed_trades": [],
   "pnl_history": [
     {
-      "timestamp": "2026-11-04 17:30 UTC",
+      "timestamp": "2026-11-04 22:52 UTC",
       "cumulative_pnl": 0.0,
       "event": "LIVE_BASELINE_START"
     },
     {
-      "timestamp": "2026-11-04 17:30 UTC",
+      "timestamp": "2026-11-04 22:52 UTC",
       "cumulative_pnl": 0,
       "event": "START"
     }
   ],
   "stats": {
     "total_trades": 0,
-    "active_trades_count": 2,
+    "active_trades_count": 1,
     "winning_trades": 0,
     "losing_trades": 0,
     "win_rate": 0.0,
