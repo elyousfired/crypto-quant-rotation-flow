@@ -1,20 +1,20 @@
 {
   "active_trades": [
     {
-      "trade_id": "TRADE-ZRO-1793832751",
+      "trade_id": "TRADE-ZRO-1793848773",
       "symbol": "ZRO",
       "name": "LayerZero",
       "sector": "Infra & Oracles",
       "sector_color": "#F59E0B",
-      "entry_time": "2026-11-04 22:52 UTC",
-      "entry_price": 1.85,
-      "current_price": 1.85,
+      "entry_time": "2026-11-05 03:19 UTC",
+      "entry_price": 1.84,
+      "current_price": 1.84,
       "unrealized_pnl_pct": 0.0,
       "max_gain_pct": 0.0,
-      "tp1_price": 2.11825,
-      "tp2_price": 2.331,
-      "sl_price": 1.7297500000000001,
-      "active_sl_price": 1.7297500000000001,
+      "tp1_price": 2.1068000000000002,
+      "tp2_price": 2.3184,
+      "sl_price": 1.7204000000000002,
+      "active_sl_price": 1.7204000000000002,
       "tp1_hit": false,
       "status": "ACTIVE"
     }
@@ -22,12 +22,12 @@
   "closed_trades": [],
   "pnl_history": [
     {
-      "timestamp": "2026-11-04 22:52 UTC",
+      "timestamp": "2026-11-05 03:19 UTC",
       "cumulative_pnl": 0.0,
       "event": "LIVE_BASELINE_START"
     },
     {
-      "timestamp": "2026-11-04 22:52 UTC",
+      "timestamp": "2026-11-05 03:19 UTC",
       "cumulative_pnl": 0,
       "event": "START"
     }
